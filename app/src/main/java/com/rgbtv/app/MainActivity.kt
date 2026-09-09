@@ -24,6 +24,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
+import androidx.compose.ui.window.DialogProperties
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.media3.common.MediaItem
 import androidx.media3.exoplayer.ExoPlayer
@@ -73,14 +74,19 @@ private fun TopBar(query: String, onQuery: (String) -> Unit, onAccounts: () -> U
 @Composable
 private fun AccountDialog(vm: MainViewModel, onDismiss: () -> Unit) {
     var tab by remember { mutableStateOf(0) }; var server by remember { mutableStateOf("") }; var user by remember { mutableStateOf("") }; var pass by remember { mutableStateOf("") }; var portal by remember { mutableStateOf("") }; var mac by remember { mutableStateOf("") }; var m3u by remember { mutableStateOf("") }
-    AlertDialog(onDismissRequest = onDismiss, title = { Text("Add IPTV source") }, text = {
-        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+    AlertDialog(
+        modifier = Modifier.widthIn(min = 360.dp, max = 640.dp),
+        properties = DialogProperties(usePlatformDefaultWidth = false),
+        onDismissRequest = onDismiss,
+        title = { Text("Add IPTV source", fontWeight = FontWeight.Bold) },
+        text = {
+        Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(10.dp)) {
             Text("Connect your Xtream, Stalker, or M3U account", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 13.sp)
-            TabRow(selectedTabIndex = tab) { listOf("Xtream", "Stalker", "M3U").forEachIndexed { i, label -> Tab(i == tab, { tab = i }, text = { Text(label) }) } }
+            ScrollableTabRow(selectedTabIndex = tab, edgePadding = 0.dp) { listOf("Xtream Codes", "Stalker Portal", "M3U Playlist").forEachIndexed { i, label -> Tab(i == tab, { tab = i }, text = { Text(label, maxLines = 1) }) } }
             when (tab) {
-                0 -> { OutlinedTextField(server, { server = it }, Modifier.fillMaxWidth(), singleLine = true, label = { Text("Server URL (HTTP/HTTPS)") }); OutlinedTextField(user, { user = it }, Modifier.fillMaxWidth(), singleLine = true, label = { Text("Username") }); OutlinedTextField(pass, { pass = it }, Modifier.fillMaxWidth(), singleLine = true, label = { Text("Password") }) }
-                1 -> { OutlinedTextField(portal, { portal = it }, Modifier.fillMaxWidth(), singleLine = true, label = { Text("Portal URL (HTTP/HTTPS)") }); OutlinedTextField(mac, { mac = it }, Modifier.fillMaxWidth(), singleLine = true, label = { Text("MAC address") }) }
-                else -> OutlinedTextField(m3u, { m3u = it }, Modifier.fillMaxWidth(), singleLine = true, label = { Text("M3U URL (HTTP/HTTPS)") })
+                0 -> { OutlinedTextField(server, { server = it }, Modifier.fillMaxWidth(), singleLine = true, placeholder = { Text("http://server.com:8080") }, label = { Text("Server URL") }); OutlinedTextField(user, { user = it }, Modifier.fillMaxWidth(), singleLine = true, placeholder = { Text("Username") }, label = { Text("Username") }); OutlinedTextField(pass, { pass = it }, Modifier.fillMaxWidth(), singleLine = true, placeholder = { Text("Password") }, label = { Text("Password") }) }
+                1 -> { OutlinedTextField(portal, { portal = it }, Modifier.fillMaxWidth(), singleLine = true, placeholder = { Text("http://portal.com/c/") }, label = { Text("Portal URL") }); OutlinedTextField(mac, { mac = it }, Modifier.fillMaxWidth(), singleLine = true, placeholder = { Text("00:1A:79:XX:XX:XX") }, label = { Text("MAC address") }) }
+                else -> OutlinedTextField(m3u, { m3u = it }, Modifier.fillMaxWidth(), singleLine = true, placeholder = { Text("http://example.com/playlist.m3u") }, label = { Text("M3U playlist URL") })
             }
         }
     }, confirmButton = { Button(onClick = { when (tab) { 0 -> vm.loadXtream(server, user, pass); 1 -> vm.loadStalker(portal, mac); else -> vm.loadM3uUrl(m3u) }; onDismiss() }) { Text("Connect") } }, dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } })
