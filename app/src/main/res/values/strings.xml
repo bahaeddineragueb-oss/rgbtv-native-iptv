@@ -1,4 +1,85 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">RGBTv</string>
+
+    <!-- Navigation -->
+    <string name="nav_browse">Browse</string>
+    <string name="group_all">All</string>
+    <string name="cd_favorites_filter">Show favorites only</string>
+    <string name="cd_accounts">Accounts</string>
+    <string name="cd_logo">RGBTv</string>
+
+    <!-- Search -->
+    <string name="search_placeholder">Search channels and movies</string>
+    <string name="cd_clear_search">Clear search</string>
+
+    <!-- Add source dialog -->
+    <string name="add_source_title">Add IPTV source</string>
+    <string name="add_source_subtitle">Connect your Xtream, Stalker, or M3U account</string>
+    <string name="tab_xtream">Xtream Codes</string>
+    <string name="tab_stalker">Stalker Portal</string>
+    <string name="tab_m3u">M3U Playlist</string>
+    <string name="label_server_url">Server URL</string>
+    <string name="label_username">Username</string>
+    <string name="label_password">Password</string>
+    <string name="label_portal_url">Portal URL</string>
+    <string name="label_mac_address">MAC address</string>
+    <string name="label_m3u_url">M3U playlist URL</string>
+    <string name="hint_server_url">http://server.com:8080</string>
+    <string name="hint_portal_url">http://portal.com/c/</string>
+    <string name="hint_mac_address">00:1A:79:XX:XX:XX</string>
+    <string name="hint_m3u_url">http://example.com/playlist.m3u</string>
+    <string name="action_connect">Connect</string>
+    <string name="action_cancel">Cancel</string>
+    <string name="action_retry">Retry</string>
+    <string name="action_close">Close</string>
+    <string name="cd_show_password">Show password</string>
+    <string name="cd_hide_password">Hide password</string>
+    <string name="http_notice">HTTP is supported for legacy providers, but it exposes your credentials on the network. Prefer HTTPS when the provider offers it.</string>
+
+    <string name="sources_saved">Saved sources</string>
+    <string name="cd_remove_source">Remove saved source</string>
+    <string name="profile_xtream">Xtream · %1$s</string>
+    <string name="profile_stalker">Stalker · %1$s</string>
+    <string name="profile_m3u">M3U · %1$s</string>
+    <string name="error_restore">Could not restore the saved source.</string>
+
+    <!-- Content -->
+    <string name="section_live_channels">Live channels</string>
+    <string name="channels_count">%1$d available</string>
+    <string name="hero_empty_title">Select a channel to start watching</string>
+    <string name="hero_empty_body">Add an IPTV source, then pick a channel from the list below.</string>
+    <string name="badge_live">LIVE</string>
+    <string name="cd_play">Play</string>
+    <string name="cd_pause">Pause</string>
+    <string name="cd_channel_logo">Channel logo</string>
+    <string name="cd_add_favorite">Add to favorites</string>
+    <string name="cd_remove_favorite">Remove from favorites</string>
+    <string name="state_buffering">Buffering…</string>
+    <string name="state_loading_playlist">Loading playlist…</string>
+    <string name="state_no_channels_title">No channels yet</string>
+    <string name="state_no_channels_body">Add an Xtream, Stalker, or M3U source to fill your catalogue.</string>
+    <string name="state_no_results_title">No match for “%1$s”</string>
+    <string name="state_no_results_body">Try another keyword or switch category.</string>
+    <string name="state_no_favorites_title">No favorites yet</string>
+    <string name="state_no_favorites_body">Tap the heart on a channel to pin it here.</string>
+
+    <!-- Errors -->
+    <string name="error_generic">Something went wrong. Please try again.</string>
+    <string name="error_network">Network error. Check your connection and try again.</string>
+    <string name="error_playlist_too_large">This playlist is too large to load.</string>
+    <string name="error_invalid_playlist">The playlist could not be read.</string>
+    <string name="error_no_channels">This source returned no playable channels.</string>
+    <string name="error_unsupported_url">Only HTTP and HTTPS URLs are supported.</string>
+    <string name="error_empty_server">Enter the server URL.</string>
+    <string name="error_empty_username">Enter your username.</string>
+    <string name="error_empty_password">Enter your password.</string>
+    <string name="error_empty_portal">Enter the portal URL.</string>
+    <string name="error_empty_m3u">Enter the playlist URL.</string>
+    <string name="error_invalid_mac">Enter a valid MAC address, for example 00:1A:79:XX:XX:XX.</string>
+    <string name="error_unauthorized">The provider rejected these credentials (HTTP %1$d).</string>
+    <string name="error_http">The provider returned HTTP %1$d.</string>
+    <string name="error_stalker_handshake">The Stalker portal refused the handshake.</string>
+    <string name="error_stalker_empty">The Stalker portal returned no channels.</string>
+    <string name="error_playback">Playback failed. The stream may be offline.</string>
 </resources>

@@ -15,7 +15,9 @@ data class Profile(
     val id: String,
     val name: String,
     val sourceType: SourceType,
-    val endpoint: String
+    val endpoint: String,
+    /** Username (Xtream) or MAC address (Stalker). Secrets never live here: they are encrypted. */
+    val account: String? = null
 )
 
 data class PlayerState(
@@ -23,4 +25,13 @@ data class PlayerState(
     val isPlaying: Boolean = false,
     val isBuffering: Boolean = false,
     val error: String? = null
+)
+
+/**
+ * A user-facing message that is resolved from a string resource by the UI layer, so the
+ * ViewModel never holds (or leaks) provider URLs and credentials inside raw text.
+ */
+data class UiMessage(
+    val resId: Int,
+    val args: List<Any> = emptyList()
 )

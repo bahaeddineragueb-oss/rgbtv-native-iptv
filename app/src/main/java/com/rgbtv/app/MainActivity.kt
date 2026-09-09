@@ -1,112 +1,330 @@
 package com.rgbtv.app
 
+import android.app.PictureInPictureParams
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
+import androidx.activity.enableEdgeToEdge
+import androidx.activity.viewModels
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.itemsIndexed as gridItemsIndexed
+import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.*
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
-import androidx.compose.runtime.collectAsState
-import androidx.compose.ui.Alignment
+import androidx.compose.material.icons.rounded.Search
+import androidx.compose.material.icons.rounded.Tv
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.coerceIn
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import androidx.compose.ui.viewinterop.AndroidView
-import androidx.compose.ui.window.DialogProperties
-import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.media3.common.MediaItem
-import androidx.media3.exoplayer.ExoPlayer
-import androidx.media3.ui.PlayerView
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.rgbtv.app.model.Channel
 import com.rgbtv.app.ui.MainViewModel
 import com.rgbtv.app.ui.RgbTvTheme
+import com.rgbtv.app.ui.components.AccountDialog
+import com.rgbtv.app.ui.components.AppTopBar
+import com.rgbtv.app.ui.components.CategoryChips
+import com.rgbtv.app.ui.components.CategoryRail
+import com.rgbtv.app.ui.components.ChannelCard
+import com.rgbtv.app.ui.components.HeroPlayer
+import com.rgbtv.app.ui.components.LoadingPlaceholder
+import com.rgbtv.app.ui.components.MessageBanner
+import com.rgbtv.app.ui.components.StatePlaceholder
+import com.rgbtv.app.ui.util.LayoutSize
+import com.rgbtv.app.ui.util.rememberDeviceKind
+import com.rgbtv.app.ui.util.rememberLayoutSize
+import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
-    override fun onCreate(savedInstanceState: Bundle?) { super.onCreate(savedInstanceState); setContent { RgbTvTheme { RgbTvApp() } } }
+
+    private val vm: MainViewModel by viewModels()
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        // Draw behind the system bars; each screen applies its own safe-area padding.
+        enableEdgeToEdge()
+        setContent {
+            RgbTvTheme { RgbTvApp(vm) }
+        }
+    }
+
+    // Keep playback alive in a small floating window when the user leaves the app.
+    override fun onUserLeaveHint() {
+        super.onUserLeaveHint()
+        if (vm.player.value.isPlaying) {
+            runCatching { enterPictureInPictureMode(PictureInPictureParams.Builder().build()) }
+        }
+    }
 }
 
 @Composable
-private fun RgbTvApp(vm: MainViewModel = viewModel()) {
-    val channels by vm.channels.collectAsState(); val playerState by vm.player.collectAsState()
-    var query by remember { mutableStateOf("") }; var selectedGroup by remember { mutableStateOf("All") }; var showAccounts by remember { mutableStateOf(true) }
-    val groups = listOf("All") + channels.map { it.group }.distinct()
-    val filtered = channels.filter { (selectedGroup == "All" || it.group == selectedGroup) && it.name.contains(query, true) }
-    LaunchedEffect(Unit) { vm.loadDemoCatalog() }
-    Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
-        Column {
-            TopBar(query, { query = it }) { showAccounts = true }
+private fun RgbTvApp(vm: MainViewModel) {
+    val channels by vm.visibleChannels.collectAsStateWithLifecycle()
+    val groups by vm.groups.collectAsStateWithLifecycle()
+    val query by vm.query.collectAsStateWithLifecycle()
+    val selectedGroup by vm.selectedGroup.collectAsStateWithLifecycle()
+    val favoritesOnly by vm.favoritesOnly.collectAsStateWithLifecycle()
+    val loading by vm.loading.collectAsStateWithLifecycle()
+    val message by vm.message.collectAsStateWithLifecycle()
+    val playerState by vm.player.collectAsStateWithLifecycle()
+    val profiles by vm.profiles.collectAsStateWithLifecycle()
+
+    // The dialog is only needed until a source has been saved; afterwards the ViewModel
+    // restores it automatically on startup.
+    var showAccounts by remember { mutableStateOf(vm.profiles.value.isEmpty()) }
+
+    val layoutSize = rememberLayoutSize()
+    val device = rememberDeviceKind()
+    val compact = layoutSize == LayoutSize.Compact
+    // The player keeps a share of the screen instead of a fixed height, so short landscape
+    // screens (phones) and ten-foot screens (TV) both keep the channel list visible.
+    val configuration = LocalConfiguration.current
+    val heroHeight = remember(configuration.screenHeightDp, layoutSize, device.isTv) {
+        val fraction = when (layoutSize) {
+            LayoutSize.Compact -> 0.34f
+            LayoutSize.Medium -> 0.44f
+            LayoutSize.Expanded -> if (device.isTv) 0.56f else 0.48f
+        }
+        (configuration.screenHeightDp * fraction).dp.coerceIn(160.dp, 460.dp)
+    }
+    val horizontalPadding = if (compact) 12.dp else 22.dp
+
+    Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .systemBarsPadding()
+        ) {
+            AppTopBar(
+                query = query,
+                onQueryChange = vm::setQuery,
+                favoritesOnly = favoritesOnly,
+                onFavoritesToggle = { vm.setFavoritesOnly(!favoritesOnly) },
+                onAccounts = { showAccounts = true },
+                showWordmark = !compact
+            )
+
+            if (compact) {
+                CategoryChips(
+                    groups = groups,
+                    selectedGroup = selectedGroup,
+                    onSelectGroup = vm::selectGroup
+                )
+            }
+
             Row(Modifier.fillMaxSize()) {
-                Sidebar(groups, selectedGroup) { selectedGroup = it }
-                Column(Modifier.weight(1f).padding(horizontal = 22.dp)) {
-                    HeroPlayer(playerState.selectedChannel)
-                    Spacer(Modifier.height(18.dp)); SectionHeader("Live channels", filtered.size)
-                    LazyRow(horizontalArrangement = Arrangement.spacedBy(14.dp), contentPadding = PaddingValues(bottom = 24.dp)) { items(filtered) { c -> ChannelCard(c, { vm.selectChannel(c) }, { vm.toggleFavorite(c.id) }) } }
+                if (!compact) {
+                    CategoryRail(
+                        groups = groups,
+                        selectedGroup = selectedGroup,
+                        onSelectGroup = vm::selectGroup
+                    )
+                }
+
+                Column(
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxHeight()
+                        .padding(horizontal = horizontalPadding)
+                ) {
+                    if (!showAccounts && message != null) {
+                        MessageBanner(
+                            message = message,
+                            onDismiss = vm::dismissMessage,
+                            onRetry = vm::retry,
+                            modifier = Modifier.padding(bottom = 12.dp)
+                        )
+                    }
+
+                    HeroPlayer(
+                        channel = playerState.selectedChannel,
+                        modifier = Modifier.height(heroHeight),
+                        onPlayingChange = vm::setPlaying
+                    )
+
+                    Spacer(Modifier.height(16.dp))
+
+                    Text(
+                        text = stringResource(R.string.section_live_channels),
+                        style = MaterialTheme.typography.titleLarge
+                    )
+                    Text(
+                        text = stringResource(R.string.channels_count, channels.size),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+
+                    Spacer(Modifier.height(10.dp))
+
+                    when {
+                        loading -> LoadingPlaceholder(
+                            text = stringResource(R.string.state_loading_playlist),
+                            modifier = Modifier.weight(1f)
+                        )
+
+                        channels.isEmpty() -> EmptyChannels(
+                            hasQuery = query.isNotBlank(),
+                            favoritesOnly = favoritesOnly,
+                            query = query,
+                            modifier = Modifier.weight(1f)
+                        )
+
+                        compact -> ChannelGrid(
+                            channels = channels,
+                            selectedId = playerState.selectedChannel?.id,
+                            onSelect = vm::selectChannel,
+                            onFavorite = vm::toggleFavorite,
+                            modifier = Modifier.weight(1f)
+                        )
+
+                        else -> ChannelRow(
+                            channels = channels,
+                            selectedId = playerState.selectedChannel?.id,
+                            onSelect = vm::selectChannel,
+                            onFavorite = vm::toggleFavorite,
+                            modifier = Modifier.weight(1f)
+                        )
+                    }
                 }
             }
         }
     }
-    if (showAccounts) AccountDialog(vm) { showAccounts = false }
-}
 
-@Composable
-private fun TopBar(query: String, onQuery: (String) -> Unit, onAccounts: () -> Unit) {
-    Row(Modifier.fillMaxWidth().height(76.dp).padding(horizontal = 24.dp), verticalAlignment = Alignment.CenterVertically) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Box(Modifier.size(42.dp).clip(RoundedCornerShape(13.dp)).background(Brush.linearGradient(listOf(Color(0xFFFF3D71), Color(0xFF8B5CF6)))), contentAlignment = Alignment.Center) { Text("RGB", color = Color.White, fontSize = 11.sp, fontWeight = FontWeight.Black) }
-            Spacer(Modifier.width(12.dp)); Text("RGB", fontSize = 21.sp, fontWeight = FontWeight.Black); Text("Tv", color = MaterialTheme.colorScheme.primary, fontSize = 21.sp, fontWeight = FontWeight.Black)
-        }
-        Spacer(Modifier.weight(1f)); OutlinedTextField(query, onQuery, Modifier.width(330.dp), singleLine = true, leadingIcon = { Icon(Icons.Rounded.Search, null) }, placeholder = { Text("Search channels and movies") }); Spacer(Modifier.width(12.dp)); IconButton(onClick = onAccounts) { Icon(Icons.Rounded.AccountCircle, "Accounts") }
+    if (showAccounts) {
+        AccountDialog(
+            loading = loading,
+            message = message,
+            profiles = profiles,
+            onDismiss = {
+                showAccounts = false
+                vm.dismissMessage()
+            },
+            onConnectXtream = vm::connectXtream,
+            onConnectStalker = vm::connectStalker,
+            onConnectM3u = vm::connectM3u,
+            onSelectProfile = {
+                vm.connectProfile(it)
+                showAccounts = false
+            },
+            onRemoveProfile = vm::removeProfile
+        )
     }
 }
 
 @Composable
-private fun AccountDialog(vm: MainViewModel, onDismiss: () -> Unit) {
-    var tab by remember { mutableStateOf(0) }; var server by remember { mutableStateOf("") }; var user by remember { mutableStateOf("") }; var pass by remember { mutableStateOf("") }; var portal by remember { mutableStateOf("") }; var mac by remember { mutableStateOf("") }; var m3u by remember { mutableStateOf("") }
-    AlertDialog(
-        modifier = Modifier.widthIn(min = 360.dp, max = 640.dp),
-        properties = DialogProperties(usePlatformDefaultWidth = false),
-        onDismissRequest = onDismiss,
-        title = { Text("Add IPTV source", fontWeight = FontWeight.Bold) },
-        text = {
-        Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-            Text("Connect your Xtream, Stalker, or M3U account", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 13.sp)
-            ScrollableTabRow(selectedTabIndex = tab, edgePadding = 0.dp) { listOf("Xtream Codes", "Stalker Portal", "M3U Playlist").forEachIndexed { i, label -> Tab(i == tab, { tab = i }, text = { Text(label, maxLines = 1) }) } }
-            when (tab) {
-                0 -> { OutlinedTextField(server, { server = it }, Modifier.fillMaxWidth(), singleLine = true, placeholder = { Text("http://server.com:8080") }, label = { Text("Server URL") }); OutlinedTextField(user, { user = it }, Modifier.fillMaxWidth(), singleLine = true, placeholder = { Text("Username") }, label = { Text("Username") }); OutlinedTextField(pass, { pass = it }, Modifier.fillMaxWidth(), singleLine = true, placeholder = { Text("Password") }, label = { Text("Password") }) }
-                1 -> { OutlinedTextField(portal, { portal = it }, Modifier.fillMaxWidth(), singleLine = true, placeholder = { Text("http://portal.com/c/") }, label = { Text("Portal URL") }); OutlinedTextField(mac, { mac = it }, Modifier.fillMaxWidth(), singleLine = true, placeholder = { Text("00:1A:79:XX:XX:XX") }, label = { Text("MAC address") }) }
-                else -> OutlinedTextField(m3u, { m3u = it }, Modifier.fillMaxWidth(), singleLine = true, placeholder = { Text("http://example.com/playlist.m3u") }, label = { Text("M3U playlist URL") })
-            }
+private fun ChannelRow(
+    channels: List<Channel>,
+    selectedId: String?,
+    onSelect: (Channel) -> Unit,
+    onFavorite: (String) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val listState = rememberLazyListState()
+    val scope = rememberCoroutineScope()
+
+    LazyRow(
+        state = listState,
+        modifier = modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(14.dp),
+        contentPadding = PaddingValues(top = 4.dp, bottom = 24.dp)
+    ) {
+        itemsIndexed(channels, key = { _, channel -> channel.id }) { index, channel ->
+            ChannelCard(
+                channel = channel,
+                selected = channel.id == selectedId,
+                onSelect = { onSelect(channel) },
+                onFavorite = { onFavorite(channel.id) },
+                // Keep the focused card visible when navigating with a TV remote.
+                onFocus = { scope.launch { listState.animateScrollToItem(index) } }
+            )
         }
-    }, confirmButton = { Button(onClick = { when (tab) { 0 -> vm.loadXtream(server, user, pass); 1 -> vm.loadStalker(portal, mac); else -> vm.loadM3uUrl(m3u) }; onDismiss() }) { Text("Connect") } }, dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } })
+    }
 }
 
 @Composable
-private fun Sidebar(groups: List<String>, selected: String, onSelect: (String) -> Unit) {
-    Column(Modifier.width(220.dp).fillMaxHeight().padding(16.dp)) { Text("BROWSE", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 11.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.5.sp, modifier = Modifier.padding(12.dp)); groups.forEach { group -> Row(Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).background(if (selected == group) MaterialTheme.colorScheme.primary.copy(.16f) else Color.Transparent).clickable { onSelect(group) }.padding(13.dp), verticalAlignment = Alignment.CenterVertically) { Icon(if (group == "All") Icons.Rounded.GridView else Icons.Rounded.Tv, null, tint = if (selected == group) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant); Spacer(Modifier.width(12.dp)); Text(group, fontWeight = if (selected == group) FontWeight.Bold else FontWeight.Normal) } } }
+private fun ChannelGrid(
+    channels: List<Channel>,
+    selectedId: String?,
+    onSelect: (Channel) -> Unit,
+    onFavorite: (String) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val gridState = rememberLazyGridState()
+    val scope = rememberCoroutineScope()
+
+    LazyVerticalGrid(
+        columns = GridCells.Adaptive(minSize = 150.dp),
+        state = gridState,
+        modifier = modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp),
+        contentPadding = PaddingValues(top = 4.dp, bottom = 24.dp)
+    ) {
+        gridItemsIndexed(channels, key = { _, channel -> channel.id }) { index, channel ->
+            ChannelCard(
+                channel = channel,
+                selected = channel.id == selectedId,
+                onSelect = { onSelect(channel) },
+                onFavorite = { onFavorite(channel.id) },
+                fillWidth = true,
+                onFocus = { scope.launch { gridState.animateScrollToItem(index) } }
+            )
+        }
+    }
 }
 
 @Composable
-private fun HeroPlayer(channel: Channel?) {
-    val context = LocalContext.current
-    val player = remember { ExoPlayer.Builder(context).build() }
-    LaunchedEffect(channel?.streamUrl) { channel?.let { player.setMediaItem(MediaItem.fromUri(it.streamUrl)); player.prepare(); player.playWhenReady = true } }
-    DisposableEffect(Unit) { onDispose { player.release() } }
-    Card(Modifier.fillMaxWidth().height(330.dp), RoundedCornerShape(22.dp), colors = CardDefaults.cardColors(Color.Black)) { Box { AndroidView({ PlayerView(it).apply { this.player = player; useController = true } }, Modifier.fillMaxSize()); if (channel == null) Box(Modifier.fillMaxSize().background(Brush.linearGradient(listOf(Color(0xFF171B2B), Color(0xFF090B12)))), contentAlignment = Alignment.Center) { Column(horizontalAlignment = Alignment.CenterHorizontally) { Icon(Icons.Rounded.Tv, null, Modifier.size(48.dp), tint = MaterialTheme.colorScheme.primary); Spacer(Modifier.height(12.dp)); Text("Select a channel to start watching", color = Color.White) } } } }
+private fun EmptyChannels(
+    hasQuery: Boolean,
+    favoritesOnly: Boolean,
+    query: String,
+    modifier: Modifier = Modifier
+) {
+    when {
+        hasQuery -> StatePlaceholder(
+            title = stringResource(R.string.state_no_results_title, query),
+            body = stringResource(R.string.state_no_results_body),
+            icon = Icons.Rounded.Search,
+            modifier = modifier
+        )
+
+        favoritesOnly -> StatePlaceholder(
+            title = stringResource(R.string.state_no_favorites_title),
+            body = stringResource(R.string.state_no_favorites_body),
+            icon = Icons.Rounded.Tv,
+            modifier = modifier
+        )
+
+        else -> StatePlaceholder(
+            title = stringResource(R.string.state_no_channels_title),
+            body = stringResource(R.string.state_no_channels_body),
+            icon = Icons.Rounded.Tv,
+            modifier = modifier
+        )
+    }
 }
-
-@Composable private fun SectionHeader(title: String, count: Int) { Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) { Text(title, fontSize = 20.sp, fontWeight = FontWeight.Bold); Spacer(Modifier.width(10.dp)); Text("$count available", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 13.sp) } }
-
-@Composable
-private fun ChannelCard(channel: Channel, onSelect: () -> Unit, onFavorite: () -> Unit) { Card(Modifier.width(168.dp).clickable { onSelect() }, RoundedCornerShape(16.dp), colors = CardDefaults.cardColors(MaterialTheme.colorScheme.surfaceVariant)) { Column(Modifier.padding(12.dp)) { Box(Modifier.fillMaxWidth().height(92.dp).clip(RoundedCornerShape(12.dp)).background(Brush.linearGradient(listOf(Color(0xFF202A44), Color(0xFF121725)))), contentAlignment = Alignment.Center) { Icon(Icons.Rounded.PlayArrow, null, Modifier.size(38.dp), tint = MaterialTheme.colorScheme.primary) }; Spacer(Modifier.height(10.dp)); Text(channel.name, fontWeight = FontWeight.Bold, maxLines = 1); Text(channel.group, color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 12.sp); Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) { Spacer(Modifier.weight(1f)); IconButton(onClick = onFavorite, Modifier.size(30.dp)) { Icon(if (channel.isFavorite) Icons.Rounded.Favorite else Icons.Rounded.FavoriteBorder, "Favorite", tint = if (channel.isFavorite) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant) } } } } }

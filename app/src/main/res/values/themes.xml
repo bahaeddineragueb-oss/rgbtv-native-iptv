@@ -2,9 +2,12 @@
 <resources>
     <style name="Theme.RGBTv" parent="android:style/Theme.Material.NoActionBar">
         <item name="android:fontFamily">sans</item>
+        <!-- Painted before Compose renders: prevents the white cold-start flash. -->
+        <item name="android:windowBackground">@color/rgb_midnight</item>
+        <!-- MainActivity calls enableEdgeToEdge(); bars stay transparent on top of the canvas. -->
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
         <item name="android:windowLightStatusBar">false</item>
-        <item name="android:statusBarColor">#080A12</item>
-        <item name="android:navigationBarColor">#080A12</item>
         <item name="android:windowActionModeOverlay">true</item>
     </style>
 </resources>

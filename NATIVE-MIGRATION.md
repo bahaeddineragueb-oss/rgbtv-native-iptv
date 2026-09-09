@@ -2,24 +2,43 @@
 
 ## Current implementation
 
-The project has been moved from a WebView shell to a native Android foundation using **Kotlin**, **Jetpack Compose Material 3**, **Media3/ExoPlayer**, and a ViewModel-driven state model. The visual direction is **Neon Cinema**: deep midnight surfaces, pink-to-violet gradients, cyan accents, large rounded cards, compact TV navigation, and high-contrast typography.
+The project has been moved from a WebView shell to a native Android foundation using **Kotlin**,
+**Jetpack Compose Material 3**, **Media3/ExoPlayer**, and a ViewModel-driven state model. The visual
+direction is **Neon Cinema**: deep midnight surfaces, pink-to-violet gradients, cyan accents, large
+rounded cards, compact TV navigation, and high-contrast typography.
 
-The native app now contains a real Media3 player surface, channel cards, category navigation, search, favorites, a native M3U parser, HTTP/HTTPS remote playlist loading, and encrypted credential storage infrastructure. HTTP cleartext traffic is enabled because many IPTV providers and Stalker portals expose only HTTP endpoints.
+The native app contains a real Media3 player surface with themed Compose controls, channel cards,
+category navigation, search, favorites, a native M3U parser, HTTP/HTTPS remote playlist loading, and
+localized English/Arabic (RTL) resources. HTTP cleartext traffic is enabled because many IPTV
+providers and Stalker portals expose only HTTP endpoints.
 
 ## Architecture
 
 | Layer | Responsibility |
 |---|---|
-| Compose UI | Modern TV-oriented layout, navigation, search, cards, empty/player states |
-| ViewModel | Screen state, filtering, selection, favorites, playlist loading |
-| Data layer | M3U parsing, HTTP/HTTPS loading, encrypted credentials |
-| Media3 | Native HLS playback, buffering, full-screen player controls |
-| Future repositories | Xtream and Stalker API adapters using native networking |
+| Compose UI | Adaptive layout (rail on tablets/TV, chips + grid on phones), D-pad focus, localized strings, loading/empty/error states |
+| ViewModel | Screen state, filtering, selection, favorites, playlist loading, `UiMessage` errors backed by string resources |
+| Data layer | M3U parsing, Xtream/Stalker HTTP adapters, encrypted credentials infrastructure |
+| Media3 | Native HLS playback, buffering, pause/resume with the lifecycle, error surfacing |
+| Future repositories | Room persistence for profiles, favorites and history |
 
 ## Product direction
 
-This is intentionally not styled like Android 5. It uses a dark cinematic canvas, restrained gradients, rounded 16–22 dp surfaces, strong hierarchy, and a wide-screen layout that scales to TV and landscape tablets. The interface keeps decoration secondary to content: channels, categories, playback status, and search remain the primary visual elements.
+This is intentionally not styled like Android 5. It uses a dark cinematic canvas, restrained
+gradients, rounded 12–28 dp surfaces, strong hierarchy, and a layout that scales from a phone in
+portrait to a TV at ten feet. Decoration stays secondary to content: channels, categories, playback
+status, and search remain the primary visual elements.
+
+Two pinks are used on purpose: a vivid pink (`#FF3D71`) for text and icons on the dark canvas
+(5.8:1 contrast) and a deeper pink (`#D81B60`) for filled surfaces that carry white labels (4.95:1),
+because white on the vivid pink would only reach 3.41:1.
 
 ## Remaining production work
 
-The current migration establishes the native shell and player but still needs full production adapters for Xtream and Stalker, Room persistence for profiles/favorites/history, a real onboarding flow, EPG mapping, MediaSession/foreground playback, and device testing on Android TV remotes. These should be implemented before publishing. HTTP should be treated as a compatibility mode: it is vulnerable to interception, so HTTPS should be preferred whenever a provider supports it.
+- Room persistence for profiles, favorites and history, plus wiring `SecureCredentials` to it.
+- Full production adapters and error taxonomy for Xtream and Stalker (pagination, retries, EPG mapping).
+- MediaSession, foreground playback and Picture-in-Picture (the manifest flag is already set).
+- Device testing on real Android TV remotes and low-end phones.
+- Release signing key managed outside the repository.
+- HTTP should be treated as a compatibility mode: it is vulnerable to interception, so HTTPS should
+  be preferred whenever a provider supports it.

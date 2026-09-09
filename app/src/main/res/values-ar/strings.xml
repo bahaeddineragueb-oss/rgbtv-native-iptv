@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">RGBTv</string>
+
+    <!-- Navigation -->
+    <string name="nav_browse">تصفّح</string>
+    <string name="group_all">الكل</string>
+    <string name="cd_favorites_filter">إظهار المفضلة فقط</string>
+    <string name="cd_accounts">الحسابات</string>
+    <string name="cd_logo">آر جي بي تي في</string>
+
+    <!-- Search -->
+    <string name="search_placeholder">ابحث في القنوات والأفلام</string>
+    <string name="cd_clear_search">مسح البحث</string>
+
+    <!-- Add source dialog -->
+    <string name="add_source_title">إضافة مصدر IPTV</string>
+    <string name="add_source_subtitle">اربط حساب Xtream أو Stalker أو قائمة M3U</string>
+    <string name="tab_xtream">Xtream Codes</string>
+    <string name="tab_stalker">بوابة Stalker</string>
+    <string name="tab_m3u">قائمة M3U</string>
+    <string name="label_server_url">عنوان الخادم</string>
+    <string name="label_username">اسم المستخدم</string>
+    <string name="label_password">كلمة المرور</string>
+    <string name="label_portal_url">عنوان البوابة</string>
+    <string name="label_mac_address">عنوان MAC</string>
+    <string name="label_m3u_url">رابط قائمة M3U</string>
+    <string name="hint_server_url">http://server.com:8080</string>
+    <string name="hint_portal_url">http://portal.com/c/</string>
+    <string name="hint_mac_address">00:1A:79:XX:XX:XX</string>
+    <string name="hint_m3u_url">http://example.com/playlist.m3u</string>
+    <string name="action_connect">اتصال</string>
+    <string name="action_cancel">إلغاء</string>
+    <string name="action_retry">إعادة المحاولة</string>
+    <string name="action_close">إغلاق</string>
+    <string name="cd_show_password">إظهار كلمة المرور</string>
+    <string name="cd_hide_password">إخفاء كلمة المرور</string>
+    <string name="http_notice">ندعم بروتوكول HTTP من أجل المزوّدين القدامى، لكنه يعرّض بياناتك للاعتراض على الشبكة. فضّل استخدام HTTPS كلما كان متاحاً.</string>
+
+    <string name="sources_saved">المصادر المحفوظة</string>
+    <string name="cd_remove_source">إزالة المصدر المحفوظ</string>
+    <string name="profile_xtream">Xtream · %1$s</string>
+    <string name="profile_stalker">Stalker · %1$s</string>
+    <string name="profile_m3u">M3U · %1$s</string>
+    <string name="error_restore">تعذّرت استعادة المصدر المحفوظ.</string>
+
+    <!-- Content -->
+    <string name="section_live_channels">البث المباشر</string>
+    <string name="channels_count">%1$d متاحة</string>
+    <string name="hero_empty_title">اختر قناة لبدء المشاهدة</string>
+    <string name="hero_empty_body">أضف مصدر IPTV ثم اختر قناة من القائمة أدناه.</string>
+    <string name="badge_live">مباشر</string>
+    <string name="cd_play">تشغيل</string>
+    <string name="cd_pause">إيقاف مؤقت</string>
+    <string name="cd_channel_logo">شعار القناة</string>
+    <string name="cd_add_favorite">إضافة إلى المفضلة</string>
+    <string name="cd_remove_favorite">إزالة من المفضلة</string>
+    <string name="state_buffering">جارٍ التحميل…</string>
+    <string name="state_loading_playlist">جارٍ تحميل القائمة…</string>
+    <string name="state_no_channels_title">لا توجد قنوات بعد</string>
+    <string name="state_no_channels_body">أضف مصدر Xtream أو Stalker أو M3U لملء القائمة.</string>
+    <string name="state_no_results_title">لا نتائج مطابقة لـ «%1$s»</string>
+    <string name="state_no_results_body">جرّب كلمة أخرى أو غيّر التصنيف.</string>
+    <string name="state_no_favorites_title">لا توجد مفضلة بعد</string>
+    <string name="state_no_favorites_body">اضغط على أيقونة القلب في أي قناة لتثبيتها هنا.</string>
+
+    <!-- Errors -->
+    <string name="error_generic">حدث خطأ ما. يرجى المحاولة مرة أخرى.</string>
+    <string name="error_network">خطأ في الشبكة. تحقّق من الاتصال ثم أعد المحاولة.</string>
+    <string name="error_playlist_too_large">هذه القائمة كبيرة جداً ولا يمكن تحميلها.</string>
+    <string name="error_invalid_playlist">تعذّر قراءة القائمة.</string>
+    <string name="error_no_channels">لم يُرجع هذا المصدر أي قنوات قابلة للتشغيل.</string>
+    <string name="error_unsupported_url">الروابط من نوع HTTP و HTTPS فقط مدعومة.</string>
+    <string name="error_empty_server">أدخل عنوان الخادم.</string>
+    <string name="error_empty_username">أدخل اسم المستخدم.</string>
+    <string name="error_empty_password">أدخل كلمة المرور.</string>
+    <string name="error_empty_portal">أدخل عنوان البوابة.</string>
+    <string name="error_empty_m3u">أدخل رابط القائمة.</string>
+    <string name="error_invalid_mac">أدخل عنوان MAC صحيحاً، مثل 00:1A:79:XX:XX:XX.</string>
+    <string name="error_unauthorized">رفض المزوّد بيانات الدخول (HTTP %1$d).</string>
+    <string name="error_http">أرجع المزوّد الخطأ HTTP %1$d.</string>
+    <string name="error_stalker_handshake">رفضت بوابة Stalker عملية الاتصال.</string>
+    <string name="error_stalker_empty">لم تُرجع بوابة Stalker أي قنوات.</string>
+    <string name="error_playback">تعذّر التشغيل. قد يكون البث متوقفاً.</string>
+</resources>

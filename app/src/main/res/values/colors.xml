@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Neon Cinema canvas. Kept in sync with ui/Theme.kt. -->
+    <color name="rgb_midnight">#FF080A12</color>
+    <color name="rgb_surface">#FF101421</color>
+    <color name="rgb_pink">#FFFF3D71</color>
+    <color name="rgb_violet">#FF8B5CF6</color>
+    <color name="rgb_cyan">#FF20D9D2</color>
+</resources>
