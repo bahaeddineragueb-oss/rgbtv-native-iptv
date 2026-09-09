@@ -55,9 +55,23 @@ app/build/outputs/apk/debug/app-debug.apk
 >
 > Opening the project in Android Studio does the same automatically.
 
-CI (`.github/workflows/android.yml`) installs JDK 17, the Android SDK and Gradle 8.10.2 explicitly,
-so it does not depend on the wrapper jar either; it uploads a debug APK artifact on every run. Build
-artifacts are no longer committed to Git: binaries are published as GitHub release assets instead.
+### Prebuilt APKs
+
+Every CI run builds both variants and mirrors them onto the orphan `builds` branch, so a downloadable
+binary is always available:
+
+| Variant | Size | Notes |
+|---|---|---|
+| [`RGBTv-release.apk`](https://github.com/bahaeddineragueb-oss/rgbtv-native-iptv/raw/builds/RGBTv-release.apk) | smallest | minified with R8, resources shrunk, signed with the debug key — the one to install |
+| [`RGBTv-debug.apk`](https://github.com/bahaeddineragueb-oss/rgbtv-native-iptv/raw/builds/RGBTv-debug.apk) | larger | debuggable, not minified |
+
+Both are universal APKs (every ABI) for `minSdk 26` and above, so a single file installs on Android TV,
+tablets and phones.
+
+CI (`.github/workflows/android.yml`) installs JDK 17, the Android SDK and Gradle 8.10.2 explicitly, so
+it does not depend on the wrapper jar. It runs `assembleDebug`, `assembleRelease`, `testDebugUnitTest`
+and `lintDebug`, uploads both APKs as artifacts, and — because artifacts expire — mirrors them onto the
+`builds` branch. If a step fails, the Gradle logs are pushed to the `ci-logs` branch instead.
 
 ## Adding a source
 

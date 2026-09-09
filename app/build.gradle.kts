@@ -21,6 +21,9 @@ android {
 
     buildTypes {
         release {
+            // Signed with the debug key so CI can publish an installable, minified APK.
+            // Swap in a release keystore before any store publication.
+            signingConfig = signingConfigs.getByName("debug")
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
@@ -54,7 +57,7 @@ dependencies {
     implementation("androidx.media3:media3-ui:1.6.1")
     implementation("androidx.media3:media3-session:1.6.1")
 
-    // Not wired yet: credential encryption lands together with Room persistence.
+    // Xtream credentials are encrypted at rest through SecureCredentials.
     implementation("androidx.security:security-crypto:1.1.0-alpha06")
     implementation("io.coil-kt:coil-compose:2.7.0")
 

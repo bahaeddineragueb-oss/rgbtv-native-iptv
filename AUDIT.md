@@ -282,6 +282,25 @@ Vector عادي في `res/drawable` بلا `mipmap-anydpi-v26` ولا `backgroun
 | MediaSession | جلسة Media3 تربط المشغّل بأزرار الوسائط وريموت التلفاز وBluetooth. |
 | الإقلاع | الحوار لم يعد يفتح قسريًا: يظهر فقط إن لم يكن هناك مصدر محفوظ؛ وإلا تُستعاد القائمة تلقائيًا. |
 
+## 11) حالة البناء: APK جاهز
+
+البناء المباشر في هذه البيئة مستحيل، فنُقل بالكامل إلى GitHub Actions مع قناة رجوع للسجلات:
+
+| المسار | النتيجة |
+|---|---|
+| بناء محلي | **مستحيل**: لا JDK ولا Android SDK، والمضيفات المطلوبة محجوبة شبكيًا — `repo1.maven.org` و`dl.google.com` و`maven.google.com` و`plugins.gradle.org` و`services.gradle.org` و`deb.debian.org` كلها (000). |
+| GitHub Actions | يعمل عند كل push: JDK 17 + SDK 35 + Gradle 8.10.2، ثم `assembleDebug` و`assembleRelease` و`testDebugUnitTest` و`lintDebug`. |
+| السجلات عند الفشل | كل خطوة Gradle تكتب نسخة في `ci-logs/` تُدفع إلى الفرع `ci-logs`، لأن واجهة Actions و`results-receiver…` محجوبتان من هنا. |
+| تسليم الـ APK | يُدفع إلى الفرع اليTIM `builds`: `RGBTv-debug.apk` و`RGBTv-release.apk` (تنزيل الـ artifacts محجوب من هذه البيئة). |
+
+**نتيجة أول بناء حقيقي:** نجح ✓ (التشغيل 10، `22645a3`) — الثلاث مهام green، وAPK موقّع بمخطط v2/v3، عالمي (كل الـ ABIs)، 22MB.
+
+أخطاء أول ترجمة فعلية التي ظهرت ثم أُصلحت (دليل على أن الفحص الساكن لا يغني عن المترجم):
+
+1. `KeyboardOptions` من الحزمة `androidx.compose.foundation.text` وليس `androidx.compose.ui.text.input`.
+2. استيراد `androidx.compose.ui.draw.clip` و`androidx.compose.foundation.layout.padding` ناقص في `AccountDialog` و`CategoryNav`.
+3. ثوابت `WindowInsets` (`safeDrawing`, `systemBars`) هي extension properties على الـ companion وتحتاج استيرادًا منفصلًا؛ استُبدلت بـ `Modifier.systemBarsPadding()` الأبسط والأقل عرضة للخطأ.
+
 ## 11) لماذا لا يوجد APK مرفق (حالة البناء)
 
 حاولتُ بناء APK فعلي وإرساله، وهذه نتيجة الفحص الموثّقة:

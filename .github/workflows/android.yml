@@ -58,6 +58,11 @@ jobs:
           set -o pipefail
           gradle --no-daemon --stacktrace assembleDebug 2>&1 | tee ci-logs/assemble.log
 
+      - name: Build release APK (minified, signed with the debug key)
+        run: |
+          set -o pipefail
+          gradle --no-daemon --stacktrace assembleRelease 2>&1 | tee ci-logs/release.log
+
       - name: Run unit tests
         run: |
           set -o pipefail
@@ -75,6 +80,13 @@ jobs:
           path: app/build/outputs/apk/debug/*.apk
           if-no-files-found: error
 
+      - name: Upload release APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: RGBTv-release
+          path: app/build/outputs/apk/release/*.apk
+          if-no-files-found: error
+
       - name: Upload lint reports
         if: always()
         uses: actions/upload-artifact@v4
@@ -89,13 +101,13 @@ jobs:
         if: success()
         run: |
           set -e
-          APK=$(ls app/build/outputs/apk/debug/*.apk | head -1)
           git config user.name "ci-bot"
           git config user.email "ci-bot@users.noreply.github.com"
           git checkout --orphan builds
           git rm -rf --cached . > /dev/null 2>&1 || true
-          cp "$APK" RGBTv-debug.apk
-          git add -f RGBTv-debug.apk
+          cp "$(ls app/build/outputs/apk/debug/*.apk | head -1)" RGBTv-debug.apk
+          cp "$(ls app/build/outputs/apk/release/*.apk | head -1)" RGBTv-release.apk
+          git add -f RGBTv-debug.apk RGBTv-release.apk
           git commit -m "Debug APK from run ${{ github.run_number }} (${GITHUB_SHA::7})"
           git push -f origin builds || echo "::warning::Could not push the builds branch; the APK is still available as an artifact."
 
